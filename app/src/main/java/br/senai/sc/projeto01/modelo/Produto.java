@@ -24,17 +24,21 @@ public class Produto implements Serializable {
         this.id = id;
     }
 
-    public String getNome() { return nome; }
+    public String getNome() {
+        return nome; }
 
-    public void setNome(String nome) { this.nome = nome; }
+    public void setNome(String nome) {
+        this.nome = nome; }
 
-    public Float getValor() { return valor; }
+    public Float getValor() {
+        return valor; }
 
-    public void setValor(Float valor) { this.valor = valor; }
+    public void setValor(Float valor) {
+        this.valor = valor; }
 
     @NonNull
     @Override
     public String toString() {
-        return nome;
+        return id + " - " + nome + "  R$ " + valor;
     }
 }

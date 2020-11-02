@@ -1,25 +1,22 @@
 package br.senai.sc.projeto01;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import br.senai.sc.projeto01.database.ProdutoDAO;
 import br.senai.sc.projeto01.modelo.Produto;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class CadastroProdutoActivity extends AppCompatActivity {
 
-    private final int RESULT_CODE_NOVO_PRODUTO = 10;
-    private final int RESULT_CODE_PRODUTO_EDITADO = 11;
-
-    private boolean edicao = false;
     private int id = 0;
+
+    private EditText editTextNome;
+    private EditText editTextValor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,16 +26,20 @@ public class CadastroProdutoActivity extends AppCompatActivity {
         carregarProduto();
     }
 
-    private void carregarProduto() {
+    private void carregarProduto(){
         Intent intent = getIntent();
         if (intent != null && intent.getExtras() != null &&
                 intent.getExtras().get("produtoEdicao") != null) {
             Produto produto = (Produto) intent.getExtras().get("produtoEdicao");
             EditText editTextNome = findViewById(R.id.editText_nome);
             EditText editTextValor = findViewById(R.id.editText_valor);
+
+//            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+//            Date data = sdf.parse(editTextNome.getText().toString());
+//            String dataString = sdf.format(data);
+
             editTextNome.setText(produto.getNome());
             editTextValor.setText(String.valueOf(produto.getValor()));
-            edicao = true;
             id = produto.getId();
         }
     }
@@ -55,15 +56,14 @@ public class CadastroProdutoActivity extends AppCompatActivity {
         Float valor = Float.parseFloat(editTextValor.getText().toString());
 
         Produto produto = new Produto(id, nome, valor);
-        Intent intent = new Intent();
-        if (edicao) {
-            intent.putExtra("produtoEditado", produto);
-            setResult(RESULT_CODE_PRODUTO_EDITADO, intent);
-        } else {
-            intent.putExtra("novoProduto", produto);
-            setResult(RESULT_CODE_NOVO_PRODUTO, intent);
+        ProdutoDAO produtoDAO = new ProdutoDAO(getBaseContext());
+        boolean salvou = produtoDAO.salvar(produto);
+        if (salvou) {
+            finish();
+        }else {
+            Toast.makeText(CadastroProdutoActivity.this, "Erro ao salvar", Toast.LENGTH_LONG).show();
         }
 
-        finish();
     }
+
 }

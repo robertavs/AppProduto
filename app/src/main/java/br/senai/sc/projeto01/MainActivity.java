@@ -1,10 +1,5 @@
 package br.senai.sc.projeto01;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,17 +9,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.IllegalFormatCodePointException;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
+import br.senai.sc.projeto01.database.ProdutoDAO;
 import br.senai.sc.projeto01.modelo.Produto;
 
 public class MainActivity extends AppCompatActivity {
-
-    private final int REQUEST_CODE_NOVO_PRODUTO = 1;
-    private final int RESULT_CODE_NOVO_PRODUTO = 10;
-    private final int REQUEST_CODE_EDITAR_PRODUTO = 2;
-    private final int RESULT_CODE_PRODUTO_EDITADO = 11;
 
     private ListView listViewProdutos;
     private ArrayAdapter<Produto> adapterProdutos;
@@ -35,17 +27,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setTitle("Produtos");
-
         listViewProdutos = findViewById(R.id.listView_produtos);
-        ArrayList<Produto> produtos = new ArrayList<Produto>();
-
-        adapterProdutos = new ArrayAdapter<Produto>(MainActivity.this,
-                android.R.layout.simple_list_item_1,
-                produtos);
-        listViewProdutos.setAdapter(adapterProdutos);
-
         definirOnClickListenerListView();
         definirOnLongClickLstener();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ProdutoDAO produtoDAO = new ProdutoDAO(getBaseContext());
+        adapterProdutos = new ArrayAdapter<Produto>(MainActivity.this,
+                android.R.layout.simple_list_item_1,
+                produtoDAO.listar());
+        listViewProdutos.setAdapter(adapterProdutos);
     }
 
     private void definirOnLongClickLstener() {
@@ -56,18 +50,21 @@ public class MainActivity extends AppCompatActivity {
 
                 new AlertDialog.Builder(MainActivity.this)
                         .setIcon(android.R.drawable.ic_delete)
-                                        .setTitle("Você quer excluir?")
-                                        .setMessage("Você quer excluir esse item?")
-                                        .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                adapterProdutos.remove(produtoClicado);
-                                                adapterProdutos.notifyDataSetChanged();
-                                                Toast.makeText(MainActivity.this, "Produto deletetado", Toast.LENGTH_LONG).show();
+                        .setTitle("Você quer excluir?")
+                        .setMessage("Você quer excluir esse item?")
+                        .setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ProdutoDAO produtoDAO = new ProdutoDAO(getBaseContext());
+                                boolean excluiu = produtoDAO.excluir(produtoClicado);
+                                if (excluiu) {
+                                    onResume();
+                                    Toast.makeText(MainActivity.this, "Excluido com sucesso", Toast.LENGTH_LONG).show();
+                                }
                             }
                         })
                         .setNegativeButton("Não", null).show();
-                return false;
+                return true;
             }
         });
     }
@@ -79,33 +76,13 @@ public class MainActivity extends AppCompatActivity {
                 Produto produtoClicado = adapterProdutos.getItem(position);
                 Intent intent = new Intent(MainActivity.this, CadastroProdutoActivity.class);
                 intent.putExtra("produtoEdicao", produtoClicado);
-                startActivityForResult(intent, REQUEST_CODE_EDITAR_PRODUTO);
+                startActivity(intent);
             }
         });
     }
 
     public void onClickNovoProduto(View v) {
         Intent intent = new Intent(MainActivity.this, CadastroProdutoActivity.class);
-        startActivityForResult(intent, REQUEST_CODE_NOVO_PRODUTO);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == REQUEST_CODE_NOVO_PRODUTO && resultCode == RESULT_CODE_NOVO_PRODUTO) {
-            Produto produto = (Produto) data.getExtras().getSerializable("novoProduto");
-            produto.setId(++id);
-            this.adapterProdutos.add(produto);
-        } else if (requestCode == REQUEST_CODE_EDITAR_PRODUTO && resultCode == RESULT_CODE_PRODUTO_EDITADO) {
-            Produto produtoEditado = (Produto) data.getExtras().getSerializable("produtoEditado");
-           for (int i = 0; i < adapterProdutos.getCount(); i++) {
-               Produto produto = adapterProdutos.getItem(i);
-               if (produto.getId() == produtoEditado.getId()) {
-                   adapterProdutos.remove(produto);
-                   adapterProdutos.insert(produtoEditado,i);
-                   break;
-               }
-           }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
+        startActivity(intent);
     }
 }
